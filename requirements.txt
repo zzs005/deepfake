@@ -1,0 +1,16 @@
+python==3.11.15
+pytorch/torch==2.11.0+cu130
+torchvision==0.26.0+cu130
+torchaudio==2.11.0+cu130
+transformers==5.8.0
+numpy==2.3.5
+pandas==3.0.2
+scipy==1.15.3
+scikit-learn==1.7.2
+librosa==0.11.0
+opencv-python-headless==4.13.0.92
+pillow==12.2.0
+tqdm==4.67.3
+joblib==1.5.3
+soundfile==0.14.0
+soxr==1.1.0
