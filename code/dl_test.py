@@ -1,13 +1,14 @@
 import os
 
-
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 from torchvision import transforms
 from torchvision import datasets 
-from torch.utils.data import DataLoader ,  Subset
+from torch.utils.data import DataLoader 
 import torch.optim as optim
-from sklearn.model_selection import train_test_split
+
+from sklearn.metrics import accuracy_score,f1_score
 
 
 class deepfake_model (nn.Module):
@@ -96,3 +97,37 @@ test_transform = transforms.Compose(
 test_data = datasets.ImageFolder(root = test_path,transform = test_transform)
 
 test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = deepfake_model()
+model_path = os.path.join( "models", "dl_model.pth")
+model.load_state_dict(torch.load(model_path,map_location=device))
+model.to(device)
+criterion = nn.CrossEntropyLoss()
+model.eval()
+test_loss = 0.0
+test_correct = 0
+test_total = 0
+
+preds = []
+all_labels = []
+with torch.no_grad():
+    for images,labels in tqdm(test_loader, desc="Testing"):
+        images, labels = images.to(device), labels.to(device)
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        test_loss += loss.item() * images.size(0)
+        _, predicted = torch.max(outputs, 1)
+        test_total += labels.size(0)
+        test_correct += (predicted == labels).sum().item()
+        preds.extend(predicted.cpu().numpy())
+        all_labels.extend(labels.cpu().numpy())
+
+test_avg_loss = test_loss / test_total
+accuracy = accuracy_score(all_labels, preds)
+f1 = f1_score(all_labels, preds)
+print(f"  Test Loss: {test_avg_loss:.4f}")
+print(f"  Accuracy: {accuracy:.2f}")
+print(f"  F1 Score: {f1:.2f}")
+

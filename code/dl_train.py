@@ -1,6 +1,6 @@
 import os
-from re import sub
 
+import tqdm
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -120,12 +120,12 @@ val_dataset = Subset(val_data, val_idx)
 
 train_loader = DataLoader(
     dataset = train_dataset,
-    batch_size = 8,
+    batch_size = 32,
     shuffle=True
 )
 val_loader = DataLoader(
     dataset = val_dataset,
-    batch_size = 8
+    batch_size = 32
 )
 print(f"  训练集: {len(train_dataset)} 张")
 print(f"  验证集: {len(val_dataset)} 张")
@@ -144,13 +144,12 @@ best_loss = float('inf')
 best_model_weights = None
 for epoch in range(1,EPOCHS+1):
 
-
     model.train()  
     train_loss = 0.0
     train_correct = 0
     train_total = 0
 
-    for images , labels in train_loader:
+    for images , labels in tqdm(train_loader, desc=f"Epoch {epoch:03d} Training", leave=False):
         images , labels = images.to(device), labels.to(device)
 
         optimizer.zero_grad()
@@ -166,7 +165,6 @@ for epoch in range(1,EPOCHS+1):
 
     train_avg_loss = train_loss / train_total
     train_acc = 100.0 * train_correct / train_total
-
 
     model.eval()
     test_loss = 0.0

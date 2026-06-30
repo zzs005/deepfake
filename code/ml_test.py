@@ -20,7 +20,7 @@ from skimage.feature import hog, local_binary_pattern
 
 
 
-def extract_hog(image_path,win_size=(256,256)):
+def extract_features(image_path,win_size=(256,256)):
     """从图像路径提取 HOG 特征"""
 
     img = cv2.imread(image_path,cv2.IMREAD_GRAYSCALE)
@@ -30,7 +30,7 @@ def extract_hog(image_path,win_size=(256,256)):
         win_size,
         (16,16),
         (8,8),
-        (8,8),
+        (16,16),
         9
     )
     hog_feat = hog.compute(img).flatten().astype(np.float32)
@@ -41,7 +41,14 @@ def extract_hog(image_path,win_size=(256,256)):
     lbp_hist = lbp_hist.astype(np.float32)
     lbp_hist /= (lbp_hist.sum() + 1e-7)
     
-    combined = np.hstack([hog_feat, lbp_hist])
+    hsv = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2HSV)
+    h_hist = cv2.calcHist([hsv], [0], None, [16], [0, 180]).flatten()
+    s_hist = cv2.calcHist([hsv], [1], None, [16], [0, 256]).flatten()
+    v_hist = cv2.calcHist([hsv], [2], None, [16], [0, 256]).flatten()
+    color_hist = np.hstack([h_hist, s_hist, v_hist])
+    color_hist = color_hist.astype(np.float32)
+    color_hist /= (color_hist.sum() + 1e-7)
+    combined = np.hstack([hog_feat, lbp_hist, color_hist])
     return combined
 
 def load_data(folder,label):
@@ -50,7 +57,7 @@ def load_data(folder,label):
     files = os.listdir(folder)
     for file in tqdm(files) :
         path = os.path.join(folder,file)
-        features = extract_hog(path)
+        features = extract_features(path)
         if features is not None:
             feature.append(features)
             
